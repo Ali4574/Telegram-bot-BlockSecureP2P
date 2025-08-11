@@ -8,7 +8,7 @@ apt install -y python3-venv git
 cd /home/ubuntu
 
 # Clone the repo directly into /home/ubuntu
-git clone https://github.com/Ali4574/Telegram-bot-CryptoCase.git /home/ubuntu/bot
+git clone https://github.com/Ali4574/Telegram-bot-BlockSecureP2P.git /home/ubuntu/BlockSecureP2P
 
 # Create and activate virtual environment
 python3 -m venv /home/ubuntu/bot/.venv
@@ -24,7 +24,7 @@ After=network.target
 [Service]
 User=ubuntu
 WorkingDirectory=/home/ubuntu/bot
-ExecStart=/home/ubuntu/bot/.venv/bin/python /home/ubuntu/bot/bot.py
+ExecStart=/home/ubuntu/bot/.venv/bin/python /home/ubuntu/BlockSecureP2P/bot.py
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -35,7 +35,7 @@ WantedBy=multi-user.target
 EOF
 
 # Fix permissions
-chown -R ubuntu:ubuntu /home/ubuntu/bot
+chown -R ubuntu:ubuntu /home/ubuntu/BlockSecureP2P
 
 # Enable and start the service
 systemctl daemon-reload
