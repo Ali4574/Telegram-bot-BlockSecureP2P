@@ -16,7 +16,7 @@ python3 -m venv /home/ubuntu/bot/.venv
 /home/ubuntu/bot/.venv/bin/pip install -r /home/ubuntu/bot/requirements.txt
 
 # Create systemd service
-cat <<EOF > /etc/systemd/system/crypto-bot.service
+cat <<EOF > /etc/systemd/system/BlockSecureP2P-bot.service
 [Unit]
 Description=Crypto Telegram Bot
 After=network.target
@@ -39,8 +39,8 @@ chown -R ubuntu:ubuntu /home/ubuntu/BlockSecureP2P
 
 # Enable and start the service
 systemctl daemon-reload
-systemctl enable crypto-bot
-systemctl start crypto-bot
+systemctl enable BlockSecureP2P-bot
+systemctl start BlockSecureP2P-bot
 
 
 
