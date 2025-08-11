@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# Update packages and install venv support
+apt update -y
+apt install -y python3-venv git
+
+# Go to ubuntu's home directory
+cd /home/ubuntu
+
+# Clone the repo directly into /home/ubuntu
+git clone https://github.com/Ali4574/Telegram-bot-CryptoCase.git /home/ubuntu/bot
+
+# Create and activate virtual environment
+python3 -m venv /home/ubuntu/bot/.venv
+/home/ubuntu/bot/.venv/bin/pip install --upgrade pip
+/home/ubuntu/bot/.venv/bin/pip install -r /home/ubuntu/bot/requirements.txt
+
+# Create systemd service
+cat <<EOF > /etc/systemd/system/crypto-bot.service
+[Unit]
+Description=Crypto Telegram Bot
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/bot
+ExecStart=/home/ubuntu/bot/.venv/bin/python /home/ubuntu/bot/bot.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Fix permissions
+chown -R ubuntu:ubuntu /home/ubuntu/bot
+
+# Enable and start the service
+systemctl daemon-reload
+systemctl enable crypto-bot
+systemctl start crypto-bot
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# #!/bin/bash
+
+# # Update and install Python + Git
+# apt update -y
+
+# # Go to ubuntu's home directory
+# cd /home/ubuntu
+
+# # Clone the repo directly into /home/ubuntu
+# git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git /home/ubuntu/bot
+
+# # Install dependencies (adjust if you have a requirements.txt)
+# pip3 install -r /home/ubuntu/bot/requirements.txt --break-system-packages
+
+# # Create systemd service
+# cat <<EOF > /etc/systemd/system/crypto-bot.service
+# [Unit]
+# Description=Crypto Telegram Bot
+# After=network.target
+
+# [Service]
+# User=ubuntu
+# WorkingDirectory=/home/ubuntu/bot
+# ExecStart=/usr/bin/python3 /home/ubuntu/bot/bot.py
+# Restart=always
+# RestartSec=5
+# StandardOutput=journal
+# StandardError=journal
+
+# [Install]
+# WantedBy=multi-user.target
+# EOF
+
+# # Fix permissions
+# chown -R ubuntu:ubuntu /home/ubuntu/bot
+
+# # Enable and start the service
+# systemctl daemon-reload
+# systemctl enable crypto-bot
+# systemctl start crypto-bot
