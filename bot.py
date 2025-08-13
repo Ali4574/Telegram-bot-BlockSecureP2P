@@ -14,8 +14,8 @@ load_dotenv()
 (
     NAME, EMAIL, CONTACT, LOCATION, BUY_SELL, CRYPTO,
     FIAT_CURRENCY, AMOUNT_RAW, USD_EQUIV, PAYMENT_METHOD,
-    TIMELINE, KYC_DONE, COMPLIANCE_AGREE, NOTES, CONFIRM
-) = range(15)
+    TIMELINE, KYC_DONE, NOTES, CONFIRM
+) = range(14)
 
 # Env config
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -203,10 +203,10 @@ async def get_payment_method(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def get_timeline(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['timeline'] = update.message.text.strip()
 
-    # KYC question - do NOT send KYC link if user says No
+    # KYC question - ask if ready to do KYC
     keyboard = [['Yes', 'No']]
     await update.message.reply_text(
-        "Section C — Compliance\n\n11) Have you completed KYC with us before? (Yes / No)",
+        "Section C — Compliance\n\n11) Are you ready to do KYC with us? (Yes / No)",
         reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
     )
     return KYC_DONE
@@ -215,49 +215,31 @@ async def get_timeline(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def get_kyc_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip().lower()
     if text == 'yes':
-        context.user_data['kyc_done'] = 'Yes'
-        # proceed to compliance agreement
-        keyboard = [['Yes', 'No']]
+        context.user_data['kyc_done'] = 'Yes - Ready for KYC'
+        # proceed directly to notes (skip compliance agreement)
         await update.message.reply_text(
-            "12) Do you agree to trade only through verified channels and follow our compliance policy? (Yes / No)",
-            reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+            "12) Any special instructions or notes for this trade? (optional)\nType 'skip' to omit.",
+            reply_markup=ReplyKeyboardRemove()
         )
-        return COMPLIANCE_AGREE
+        return NOTES
     elif text == 'no':
-        # DO NOT send the KYC link automatically as requested
-        context.user_data['kyc_done'] = 'No'
-        # directly proceed to compliance agreement without sending any link
-        keyboard = [['Yes', 'No']]
+        context.user_data['kyc_done'] = 'No - Not ready for KYC'
+        # proceed directly to notes (skip compliance agreement)
         await update.message.reply_text(
-            "Understood. Please confirm:\n12) Do you agree to trade only through verified channels and follow our compliance policy? (Yes / No)",
-            reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+            "12) Any special instructions or notes for this trade? (optional)\nType 'skip' to omit.",
+            reply_markup=ReplyKeyboardRemove()
         )
-        return COMPLIANCE_AGREE
-    elif text == 'done':
-        # user claims KYC done elsewhere / already completed
-        context.user_data['kyc_done'] = 'Completed (external)'
-        keyboard = [['Yes', 'No']]
-        await update.message.reply_text(
-            "12) Do you agree to trade only through verified channels and follow our compliance policy? (Yes / No)",
-            reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
-        )
-        return COMPLIANCE_AGREE
+        return NOTES
     else:
         # fallback - ask explicitly for Yes/No
         keyboard = [['Yes', 'No']]
         await update.message.reply_text(
-            "Please reply 'Yes' or 'No' — Have you completed KYC with us before?",
+            "Please reply 'Yes' or 'No' — Are you ready to do KYC with us?",
             reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
         )
         return KYC_DONE
 
-async def get_compliance_agree(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data['compliance_agree'] = update.message.text.strip()
-    await update.message.reply_text(
-        "13) Any special instructions or notes for this trade? (optional)\nType 'skip' to omit.",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    return NOTES
+
 
 async def get_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
@@ -281,8 +263,7 @@ async def get_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"USD Equivalent: ${ud.get('usd_equiv')}\n"
         f"Payment Method: {ud.get('payment_method')}\n"
         f"Timeline: {ud.get('timeline')}\n"
-        f"KYC Done: {ud.get('kyc_done')}\n"
-        f"Compliance Agreed: {ud.get('compliance_agree')}\n"
+        f"KYC Status: {ud.get('kyc_done')}\n"
         f"Notes: {ud.get('notes')}\n\n"
         f"Minimum trade size: USD ${MIN_USD:.0f}\n\n"
         "Confirm request submission?"
@@ -305,7 +286,7 @@ async def get_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Amount: {ud.get('amount_raw')}\nUSD Equivalent: ${ud.get('usd_equiv')}\nPayment Method: {ud.get('payment_method')}\n"
             f"Timeline: {ud.get('timeline')}\n\n"
             "Section C — Compliance\n"
-            f"KYC Done: {ud.get('kyc_done')}\nCompliance Agreed: {ud.get('compliance_agree')}\n\n"
+            f"KYC Status: {ud.get('kyc_done')}\n\n"
             f"Notes: {ud.get('notes')}\n\n"
             f"⚠️ Minimum trade size: USD ${MIN_USD:.0f}"
         )
@@ -354,7 +335,6 @@ def main():
             PAYMENT_METHOD: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_payment_method)],
             TIMELINE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_timeline)],
             KYC_DONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_kyc_done)],
-            COMPLIANCE_AGREE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_compliance_agree)],
             NOTES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_notes)],
             CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_confirm)],
         },

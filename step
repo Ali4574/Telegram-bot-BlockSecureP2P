@@ -11,9 +11,9 @@ cd /home/ubuntu
 git clone https://github.com/Ali4574/Telegram-bot-BlockSecureP2P.git /home/ubuntu/BlockSecureP2P
 
 # Create and activate virtual environment
-python3 -m venv /home/ubuntu/bot/.venv
+python3 -m venv /home/ubuntu/BlockSecureP2P/.venv
 /home/ubuntu/bot/.venv/bin/pip install --upgrade pip
-/home/ubuntu/bot/.venv/bin/pip install -r /home/ubuntu/bot/requirements.txt
+/home/ubuntu/bot/.venv/bin/pip install -r /home/ubuntu/BlockSecureP2P/requirements.txt
 
 # Create systemd service
 cat <<EOF > /etc/systemd/system/BlockSecureP2P-bot.service
@@ -71,29 +71,29 @@ systemctl start BlockSecureP2P-bot
 # # Install dependencies (adjust if you have a requirements.txt)
 # pip3 install -r /home/ubuntu/bot/requirements.txt --break-system-packages
 
-# # Create systemd service
-# cat <<EOF > /etc/systemd/system/crypto-bot.service
-# [Unit]
-# Description=Crypto Telegram Bot
-# After=network.target
+# Create systemd service
+cat <<EOF > /etc/systemd/system/BlockSecureP2P-bot-test.service
+[Unit]
+Description=Crypto Telegram Bot
+After=network.target
 
-# [Service]
-# User=ubuntu
-# WorkingDirectory=/home/ubuntu/bot
-# ExecStart=/usr/bin/python3 /home/ubuntu/bot/bot.py
-# Restart=always
-# RestartSec=5
-# StandardOutput=journal
-# StandardError=journal
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/bot
+ExecStart=/usr/bin/python3 /home/ubuntu/BlockSecureP2P/bot.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
 
-# [Install]
-# WantedBy=multi-user.target
-# EOF
+[Install]
+WantedBy=multi-user.target
+EOF
 
 # # Fix permissions
-# chown -R ubuntu:ubuntu /home/ubuntu/bot
+# chown -R ubuntu:ubuntu /home/ubuntu/BlockSecureP2P
 
 # # Enable and start the service
 # systemctl daemon-reload
-# systemctl enable crypto-bot
-# systemctl start crypto-bot
+# systemctl enable BlockSecureP2P-bot-test
+# systemctl start BlockSecureP2P-bot-test
