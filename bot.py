@@ -14,8 +14,8 @@ load_dotenv()
 (
     NAME, EMAIL, CONTACT, LOCATION, BUY_SELL, CRYPTO,
     FIAT_CURRENCY, AMOUNT_RAW, USD_EQUIV, PAYMENT_METHOD,
-    TIMELINE, KYC_DONE, NOTES, CONFIRM
-) = range(14)
+    TIMELINE, KYC_DONE, NOTES
+) = range(13)
 
 # Env config
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -248,62 +248,34 @@ async def get_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         context.user_data['notes'] = text
 
-    # Summarize and ask for final confirmation — now with buttons Yes / No
+    # Submit request directly without confirmation
     ud = context.user_data
-    summary = (
-        "📋 Please confirm your trade request:\n\n"
-        f"Name: {ud.get('name')}\n"
-        f"Email: {ud.get('email')}\n"
-        f"Contact: {ud.get('contact')}\n"
-        f"Location: {ud.get('location')}\n\n"
-        f"Buy/Sell: {ud.get('buy_sell')}\n"
-        f"Crypto: {ud.get('crypto')}\n"
-        f"Against: {ud.get('fiat_currency')}\n"
-        f"Amount: {ud.get('amount_raw')}\n"
-        f"USD Equivalent: ${ud.get('usd_equiv')}\n"
-        f"Payment Method: {ud.get('payment_method')}\n"
-        f"Timeline: {ud.get('timeline')}\n"
-        f"KYC Status: {ud.get('kyc_done')}\n"
+    message = (
+        "🚨 NEW P2P TRADE REQUEST 🚨\n\n"
+        "Section A — Contact Info\n"
+        f"Name: {ud.get('name')}\nEmail: {ud.get('email')}\nContact: {ud.get('contact')}\nLocation: {ud.get('location')}\n\n"
+        "Section B — Transaction Details\n"
+        f"Buy/Sell: {ud.get('buy_sell')}\nCrypto: {ud.get('crypto')}\nAgainst: {ud.get('fiat_currency')}\n"
+        f"Amount: {ud.get('amount_raw')}\nUSD Equivalent: ${ud.get('usd_equiv')}\nPayment Method: {ud.get('payment_method')}\n"
+        f"Timeline: {ud.get('timeline')}\n\n"
+        "Section C — Compliance\n"
+        f"KYC Status: {ud.get('kyc_done')}\n\n"
         f"Notes: {ud.get('notes')}\n\n"
-        f"Minimum trade size: USD ${MIN_USD:.0f}\n\n"
-        "Confirm request submission?"
+        f"⚠️ Minimum trade size: USD ${MIN_USD:.0f}"
     )
-    confirm_kb = ReplyKeyboardMarkup([['Yes - Proceed', 'No - Cancel']], one_time_keyboard=True, resize_keyboard=True)
-    await update.message.reply_text(summary, reply_markup=confirm_kb)
-    return CONFIRM
-
-async def get_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.strip().lower()
-    if text == 'yes - proceed' or text == 'yes' or text.startswith('yes'):
-        ud = context.user_data
-        # send to admin
-        message = (
-            "🚨 NEW P2P TRADE REQUEST 🚨\n\n"
-            "Section A — Contact Info\n"
-            f"Name: {ud.get('name')}\nEmail: {ud.get('email')}\nContact: {ud.get('contact')}\nLocation: {ud.get('location')}\n\n"
-            "Section B — Transaction Details\n"
-            f"Buy/Sell: {ud.get('buy_sell')}\nCrypto: {ud.get('crypto')}\nAgainst: {ud.get('fiat_currency')}\n"
-            f"Amount: {ud.get('amount_raw')}\nUSD Equivalent: ${ud.get('usd_equiv')}\nPayment Method: {ud.get('payment_method')}\n"
-            f"Timeline: {ud.get('timeline')}\n\n"
-            "Section C — Compliance\n"
-            f"KYC Status: {ud.get('kyc_done')}\n\n"
-            f"Notes: {ud.get('notes')}\n\n"
-            f"⚠️ Minimum trade size: USD ${MIN_USD:.0f}"
-        )
-        if ADMIN_ID == 0:
-            await update.message.reply_text("⚠️ ADMIN_ID not set — cannot forward request. Check .env.")
-        else:
-            await context.bot.send_message(chat_id=ADMIN_ID, text=message)
-
-        await update.message.reply_text(
-            "✅ Request submitted. Our trade desk will review and contact you shortly.\n"
-            "Thank you!",
-            reply_markup=ReplyKeyboardRemove()
-        )
-        return ConversationHandler.END
+    if ADMIN_ID == 0:
+        await update.message.reply_text("⚠️ ADMIN_ID not set — cannot forward request. Check .env.")
     else:
-        await update.message.reply_text("❌ Request cancelled. You can start again with /start.", reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        await context.bot.send_message(chat_id=ADMIN_ID, text=message)
+
+    await update.message.reply_text(
+        "✅ Request submitted. Our trade desk will review and contact you shortly.\n"
+        "Thank you!",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    return ConversationHandler.END
+
+
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -336,7 +308,6 @@ def main():
             TIMELINE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_timeline)],
             KYC_DONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_kyc_done)],
             NOTES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_notes)],
-            CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_confirm)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         conversation_timeout=600
